@@ -1,7 +1,9 @@
+import os
 import sys
 import argparse
+from typing import List
 from common import *
-from snatcher import NewsSnatcher, ComicSnatcher, SnatchAttemptFailed
+from snatcher import NewsSnatcher, ComicSnatcherXkcd, ComicSnatcherExt, ComicSnatcherXkcdResult, SnatchAttemptFailed
 from saver import save_as_file
 
 
@@ -12,6 +14,7 @@ def main() -> None:
     parserForComic = subparsers.add_parser('comic')
     parserForComic.add_argument('wut_comic', choices = [ 'xkcd', 'ext' ])
     parserForComic.add_argument('--save-as', type = str, default = None, help = 'save comic as')
+    parserForComic.add_argument('--save-in', type = str, default = None, help = 'save comic in which folder?')
     parserForComic.add_argument('--download-from', type = str, default = None, help = 'download from this page')
 
     args = parser.parse_args()
@@ -21,7 +24,7 @@ def main() -> None:
 
 
     if args.wut_comic == 'xkcd':
-        santcher = ComicSnatcher()
+        santcher = ComicSnatcherXkcd()
         if args.save_as is None:
             args.save_as = f'{args.wut_comic}.png'
 
@@ -38,8 +41,18 @@ def main() -> None:
             LOG_ERROR("failed to write to file '{args.save_as}'");
             exit(1)
 
-    elif args.wut_comic == 'existential':
-        pass
+    elif args.wut_comic == 'ext':
+        snatcher_ext = ComicSnatcherExt(args.download_from, args.save_in)
+
+        try:
+            snatcher_ext.save_as_folder()
+        except FileExistsError:
+            panic(f'folder already exists: "{args.save_in}"')
+        except SnatchAttemptFailed as e:
+            panic(f'failed snatch attempt: {e}')
+        except Expection as e:
+            panic("failed to store comics in '{args.save_in}': {e}")
+
 
 
 if __name__ == '__main__':

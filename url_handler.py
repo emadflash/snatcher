@@ -25,7 +25,7 @@ class Url:
 class Preprocess_url:
     def __init__(self, base_url: str, endpoint: Optional[str]) -> None:
         self.base_url: Url = Url(base_url)
-        self.endpoint: Url  = endpoint
+        self.endpoint: str  = endpoint
 
         self.page_url: Url
         if endpoint == None:
