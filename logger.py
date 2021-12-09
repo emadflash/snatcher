@@ -1,6 +1,7 @@
 import sys
 import logging
 from logging import info as LOG_INFO
+from logging import error as LOG_ERROR
 
 
 logging.basicConfig(
