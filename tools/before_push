@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+
+set -xe
+set -o pipefail
+set -u
+
+pwython_files=$(find -maxdepth 1 -type f -iname '*.py')
+printf '%s\n' "${pwython_files[@]}" | xargs black
+printf '%s\n' "${pwython_files[@]}" | xargs isort
+
+
+## update requirements.txt
+## Activate source venv
+if [[! -d "venv" ]]; then
+    echo 'missing venv........'
+    exit 1
+fi
+
+source venv/bin/activate && ./tools/update-requirements

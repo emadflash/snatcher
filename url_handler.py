@@ -1,14 +1,15 @@
 import urllib
-from urllib.request import urlopen
-from urllib.parse import urljoin, urlparse
-from bs4 import BeautifulSoup
 from typing import Optional
+from urllib.parse import urljoin, urlparse
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
 
 
 class Url:
     def __init__(self, url) -> None:
         self.url = url
-        
+
     def join(self, toJoin: str):
         return Url(urljoin(self.url, toJoin))
 
@@ -25,7 +26,7 @@ class Url:
 class Preprocess_url:
     def __init__(self, base_url: str, endpoint: Optional[str]) -> None:
         self.base_url: Url = Url(base_url)
-        self.endpoint: str  = endpoint
+        self.endpoint: str = endpoint
 
         self.page_url: Url
         if endpoint == None:
@@ -39,7 +40,7 @@ class Preprocess_url:
 
     def getUrl(self) -> str:
         return self.page_url.get()
-    
+
     def getParsed(self):
         return self.page_url.getParsed()
 
@@ -51,4 +52,4 @@ class Preprocess_url:
             raise e
 
     def getSoup(self) -> str:
-        return BeautifulSoup(self.getPageSource(), 'html.parser')
+        return BeautifulSoup(self.getPageSource(), "html.parser")
