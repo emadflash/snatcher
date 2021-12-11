@@ -96,7 +96,7 @@ class ComicSnatcherExt(ComicSnatcher):
         self, url: str = None, save_in: str = None, is_save_pdf: bool = False
     ) -> None:
         self.is_random: bool = bool(url == None)
-        self.is_save_in: bool = bool(url == None)
+        self.is_save_in: bool = bool(url != None)
         self.url: Preprocess_url = (
             Preprocess_url(url, None)
             if not self.is_random
@@ -104,6 +104,11 @@ class ComicSnatcherExt(ComicSnatcher):
         )
         self.save_in: str = save_in
         self.is_save_pdf: bool = is_save_pdf
+
+    @staticmethod
+    def is_vaild_url(url: Url) -> bool:
+        urlParsed = url.getParsed()
+        return bool(urlParsed.netloc == "existentialcomics.com")
 
     @staticmethod
     def getPngName(url: Url) -> str:
@@ -125,6 +130,10 @@ class ComicSnatcherExt(ComicSnatcher):
             LOG_INFO(
                 f'Picking random existential comic using {ComicSnatcher.comics["ext"]}'
             )
+
+        if not self.is_random:
+            if not ComicSnatcherExt.is_vaild_url(self.url):
+                raise SnatchAttemptFailed(f'invaild url "{self.url.get()}"')
 
         try:
             urlSoup = self.url.getSoup()
@@ -168,6 +177,14 @@ class ComicSnatcherExt(ComicSnatcher):
         except OSError:
             panic(f'failded deleting dir "{self.save_in}"')
 
+    @staticmethod
+    def remove_file(file: str) -> None:
+        try:
+            os.remove(file)
+            LOG_INFO(f"removed file {file}")
+        except OSError:
+            panic(f'failded deleting file "{file}"')
+
     def panic(self, msg: str) -> None:
         self.remove_folder()
         panic(msg)
@@ -186,7 +203,17 @@ class ComicSnatcherExt(ComicSnatcher):
 
         pdfName = ComicSnatcherExt.getPdfNameFromStr(self.save_in)
         LOG_INFO(f'writing pdf "{pdfName}"')
-        first_img.save(pdfName, save_all=True, append_images=img_list)
+
+        try:
+            if len(img_locs) < 2:
+                first_img = first_img.convert("RGB")
+                first_img.save(pdfName)
+            else:
+                first_img.save(pdfName, save_all=True, append_images=img_list)
+        except Exception as e:
+            ComicSnatcherExt.remove_file(pdfName)
+            raise SnatchFaildPdfCreateError(e)
+
         self.remove_folder()
 
     def save(self) -> None:

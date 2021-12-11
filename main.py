@@ -7,7 +7,7 @@ from common import *
 from saver import save_as_file
 from snatcher import (ComicSnatcherExt, ComicSnatcherXkcd,
                       ComicSnatcherXkcdResult, NewsSnatcher,
-                      SnatchAttemptFailed)
+                      SnatchAttemptFailed, SnatchFaildPdfCreateError)
 
 
 def main() -> None:
@@ -58,7 +58,7 @@ def main() -> None:
         try:
             snatcher_ext.save()
         except FileExistsError:
-            panic(f'folder already exists: "{args.save_in}"')
+            panic(f'folder already exists: "{snatcher_ext.save_in}"')
         except SnatchAttemptFailed as e:
             panic(f"failed snatch attempt: {e}")
         except SnatchFaildPdfCreateError:
