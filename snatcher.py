@@ -1,10 +1,12 @@
 import os
+import shutil
 from dataclasses import dataclass
 from itertools import takewhile
 from typing import Generator, List
 
 import requests
 from bs4 import BeautifulSoup
+from PIL import Image
 
 from common import *
 from saver import save_as_file
@@ -13,6 +15,10 @@ from url_handler import Preprocess_url, Url
 
 class SnatchAttemptFailed(Exception):
     """raised when we didnt' snatch anything"""
+
+
+class SnatchFaildPdfCreateError(Exception):
+    """raised when we weren't able to create pdf"""
 
 
 class NewsSnatcher:
@@ -86,7 +92,9 @@ class ComicSnatcherXkcdResult:
 
 
 class ComicSnatcherExt(ComicSnatcher):
-    def __init__(self, url: str = None, save_in: str = None) -> None:
+    def __init__(
+        self, url: str = None, save_in: str = None, is_save_pdf: bool = False
+    ) -> None:
         self.is_random: bool = bool(url == None)
         self.is_save_in: bool = bool(url == None)
         self.url: Preprocess_url = (
@@ -94,7 +102,8 @@ class ComicSnatcherExt(ComicSnatcher):
             if not self.is_random
             else Preprocess_url(ComicSnatcher.comics["ext"], None)
         )
-        self.save_in = save_in
+        self.save_in: str = save_in
+        self.is_save_pdf: bool = is_save_pdf
 
     @staticmethod
     def getPngName(url: Url) -> str:
@@ -106,6 +115,10 @@ class ComicSnatcherExt(ComicSnatcher):
         return "".join(
             list(takewhile(lambda x: not x.isdigit(), ComicSnatcherExt.getPngName(url)))
         )
+
+    @staticmethod
+    def getPdfNameFromStr(url: str) -> str:
+        return f"{url}.pdf"
 
     def snatch(self) -> Generator[ComicSnatcherXkcdResult, None, None]:
         if self.is_random:
@@ -137,6 +150,44 @@ class ComicSnatcherExt(ComicSnatcher):
         for imgUrl in imgUrls:
             yield getImgByte(imgUrl)
 
-    def save_as_folder(self) -> None:
+    def save_as_folder(self) -> List[str]:
+        img_loc: str
+        img_locs: List[str] = list()
+
         for res in self.snatch():
-            save_as_file(res.raw_data, f"{self.save_in}/{res.comic_name}.png")
+            img_loc = f"{self.save_in}/{res.comic_name}.png"
+            img_locs.append(img_loc)
+            save_as_file(res.raw_data, img_loc)
+
+        return img_locs
+
+    def remove_folder(self) -> None:
+        try:
+            shutil.rmtree(self.save_in)
+            LOG_INFO(f"deleted folder {self.save_in}")
+        except OSError:
+            panic(f'failded deleting dir "{self.save_in}"')
+
+    def panic(self, msg: str) -> None:
+        self.remove_folder()
+        panic(msg)
+
+    def save_as_pdf(self) -> None:
+        assert self.is_save_pdf
+        img_locs: List[str] = self.save_as_folder()
+
+        assert len(img_locs) >= 1
+
+        try:
+            first_img = Image.open(img_locs[0])
+            img_list = [Image.open(img) for img in img_locs[1::]]
+        except Exception as e:
+            raise SnatchFaildPdfCreateError(e)
+
+        pdfName = ComicSnatcherExt.getPdfNameFromStr(self.save_in)
+        LOG_INFO(f'writing pdf "{pdfName}"')
+        first_img.save(pdfName, save_all=True, append_images=img_list)
+        self.remove_folder()
+
+    def save(self) -> None:
+        self.save_as_pdf() if self.is_save_pdf else self.save_as_folder()

@@ -25,6 +25,7 @@ def main() -> None:
     parserForComic.add_argument(
         "--download-from", type=str, default=None, help="download from this page"
     )
+    parserForComic.add_argument("--pdf", action="store_true", help="create pdf")
 
     args = parser.parse_args()
     if len(sys.argv) < 2:
@@ -52,14 +53,16 @@ def main() -> None:
             exit(1)
 
     elif args.wut_comic == "ext":
-        snatcher_ext = ComicSnatcherExt(args.download_from, args.save_in)
+        snatcher_ext = ComicSnatcherExt(args.download_from, args.save_in, args.pdf)
 
         try:
-            snatcher_ext.save_as_folder()
+            snatcher_ext.save()
         except FileExistsError:
             panic(f'folder already exists: "{args.save_in}"')
         except SnatchAttemptFailed as e:
             panic(f"failed snatch attempt: {e}")
+        except SnatchFaildPdfCreateError:
+            snatcher_ext.panic(f"failed creating pdf {snatcher_ext.save_in}")
         except Expection as e:
             panic("failed to store comics in '{args.save_in}': {e}")
 
