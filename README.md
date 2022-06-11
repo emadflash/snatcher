@@ -1,15 +1,15 @@
 # snatcher
 
-Idk why i wrote this thing :D
+> idk why i wrote this thing 😆
 
-It snatches comics from [existentialcomics](https://existentialcomics.com/) and [xkcd](https://xkcd.com/)
+scrap comics from [existentialcomics](https://existentialcomics.com/) and [xkcd](https://xkcd.com/)
 
 
 ## Quick start
 `python3` for linux and maybe `python` for windows
 
 
-- With virtualenv (NOT REQUIRED)
+- With virtualenv (**NOT REQUIRED**)
 ```
 $ python3 -m virtualenv venv
 $ source venv/bin/activate
@@ -19,10 +19,6 @@ $ source venv/bin/activate
 ```
 $ pip install -r requirements.txt
 ```
-
-
-
-
 
 ## Usage
 ```
@@ -54,8 +50,8 @@ optional arguments:
 ```
 
 
-## In action
-Fetches random comic from [existentialcomics](https://existentialcomics.com/) and saves it as a pdf
+## Examples
+fetches random comic from [existentialcomics](https://existentialcomics.com/) and saves it as a pdf
 ```
 $ python3 main.py comic ext --pdf
 ```
